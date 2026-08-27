@@ -7,7 +7,7 @@ export interface DemoUser {
 }
 
 export const demoUsers: DemoUser[] = [
-  { username: 'denny', password: 'denny123', label: 'Denny (HOD · IT)' },
   { username: 'sajeesh', password: 'sajeesh123', label: 'Sajeesh (HOD · Sales)' },
+  { username: 'denny', password: 'denny123', label: 'Denny (HOD · IT)' },
   { username: 'anjana', password: 'anjana123', label: 'Anjana (Accountant)' },
 ]
