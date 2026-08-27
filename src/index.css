@@ -1,0 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import 'tailwindcss';
+
+/* Mirrors lib/src/theme/app_theme.dart's AppColors exactly, so the web app
+   matches the Flutter app's Blue Rhine brand palette. */
+@theme {
+  --color-brand-orange: #f54900;
+  --color-brand-darkblue: #32568e;
+  --color-brand-brightblue: #155dfc;
+  --color-brand-lightblue: #e3f2fd;
+
+  --color-brand-background: #f8f9fa;
+  --color-brand-card: #ffffff;
+
+  --color-brand-text: #1a1c1e;
+  --color-brand-textmuted: #6c7278;
+
+  --color-brand-divider: #e0e0e0;
+
+  --color-brand-success: #2e7d4f;
+  --color-brand-successsoft: #e8f5e9;
+  --color-brand-danger: #c62828;
+  --color-brand-warningsoft: #fff3e0;
+
+  --font-sans: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--color-brand-background);
+  color: var(--color-brand-text);
+}
