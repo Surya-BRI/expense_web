@@ -7,7 +7,7 @@ import { clearTokens, getRefreshToken, setAccessToken, setRefreshToken } from '.
 interface AuthContextValue {
   user: AuthUser | null
   isBootstrapping: boolean
-  login: (username: string, password: string) => Promise<AuthUser>
+  login: (username: string, password: string, regionCode?: string) => Promise<AuthUser>
   logout: () => void
 }
 
@@ -41,8 +41,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const login = useCallback(async (username: string, password: string) => {
-    const session = await authApi.login(username, password)
+  const login = useCallback(async (username: string, password: string, regionCode?: string) => {
+    const session = await authApi.login(username, password, regionCode)
     setAccessToken(session.access_token)
     setRefreshToken(session.refresh_token)
     setUser(session.user)

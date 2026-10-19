@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
-import { landingPathFor } from '../routing/roleLanding'
+import { queueStagesFor } from '../routing/roleLanding'
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   `rounded-xl px-3 py-1.5 text-sm font-medium ${
@@ -25,11 +25,13 @@ export function AppShell() {
           <div className="flex items-center gap-4">
             {/* <img src="/brand/Br_fulllogo.png" alt="Blue Rhine" className="h-7 w-auto object-contain" /> */}
             <nav className="flex gap-1">
-              <NavLink to={landingPathFor(user.role)} className={navLinkClass} end>
-                Queue
-              </NavLink>
-              <NavLink to="/admin/claims" className={navLinkClass}>
-                All Claims
+              {queueStagesFor(user.role).map(({ stage, label }) => (
+                <NavLink key={stage} to={`/queue/${stage}`} className={navLinkClass}>
+                  {label}
+                </NavLink>
+              ))}
+              <NavLink to="/history" className={navLinkClass}>
+                History
               </NavLink>
             </nav>
           </div>

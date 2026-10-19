@@ -1,5 +1,5 @@
 import { fetchJson } from './client'
-import type { BulkApproveResponse, Transaction } from './types'
+import type { BulkApproveResponse, HistoryTransaction, Transaction } from './types'
 
 export function fetchQueue(stage: string): Promise<Transaction[]> {
   return fetchJson(`/api/approvals/queue?stage=${encodeURIComponent(stage)}`)
@@ -26,4 +26,22 @@ export function bulkApprove(transactionIds: number[]): Promise<BulkApproveRespon
     method: 'POST',
     body: JSON.stringify({ transaction_ids: transactionIds }),
   })
+}
+
+export function fetchHistory(limit = 100): Promise<HistoryTransaction[]> {
+  return fetchJson(`/api/approvals/history?limit=${limit}`)
+}
+
+export function resolveVendor(
+  id: number,
+  payload: { vendor_id: number; create_new: false } | { vendor_id: null; create_new: true },
+): Promise<Transaction> {
+  return fetchJson(`/api/approvals/${id}/resolve-vendor`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export function fetchVendors(): Promise<{ id: number; name: string }[]> {
+  return fetchJson('/api/vendors')
 }

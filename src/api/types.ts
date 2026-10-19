@@ -5,7 +5,9 @@ export interface AuthUser {
   display_name: string
   role: Role
   department_id: number | null
+  department_name: string | null
   email: string | null
+  region_code: string | null
   // Present on POST /login and /refresh's `user` object; ABSENT on GET /me.
   username?: string
 }
@@ -50,6 +52,17 @@ export interface DuplicateWarning {
   existing_claim_id?: number
 }
 
+export interface LineItem {
+  id: number
+  line_no: number
+  description: string
+  quantity: number | null
+  amount: number
+  category_id: number | null
+  category_name: string | null
+  op_number: string | null
+}
+
 export interface Transaction {
   id: number
   type: string
@@ -62,7 +75,9 @@ export interface Transaction {
   category_name: string | null
   vendor_id: number | null
   vendor_name: string | null
+  vendor_unmatched: boolean
   bill_date: string
+  bill_number: string | null
   currency: string
   exchange_rate: number
   amount: number
@@ -83,8 +98,17 @@ export interface Transaction {
   receipt: ReceiptInfo | null
   duplicate_warning: DuplicateWarning | null
   stage_sequence: string[]
+  line_mode: 'single' | 'multiple'
+  line_items: LineItem[]
   // Present on GET /api/approvals/:id, ABSENT on GET /api/approvals/queue.
   history?: HistoryItem[]
+}
+
+export interface HistoryTransaction extends Transaction {
+  my_action: 'approve' | 'reject' | 'dispute'
+  my_action_stage: string
+  my_actioned_at: string | null
+  my_comment: string | null
 }
 
 export type SkipReason =

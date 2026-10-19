@@ -1,5 +1,6 @@
-// Mirrors the demo-user dropdown in the Flutter app's login_screen.dart, scoped
-// to just the hod/accountant seed accounts this web app supports.
+// ERP user quick-fill list for the login form, scoped to hod/accountant accounts.
+// Mirrors Flutter's _demoAccounts in login_screen.dart.
+// All seeded accounts use Test@1234 (set by backend/scripts/seed_dev_erp_users.py).
 export interface DemoUser {
   username: string
   password: string
@@ -7,7 +8,8 @@ export interface DemoUser {
 }
 
 export const demoUsers: DemoUser[] = [
-  { username: 'sajeesh', password: 'sajeesh123', label: 'Sajeesh (HOD · Sales)' },
-  { username: 'denny', password: 'denny123', label: 'Denny (HOD · IT)' },
-  { username: 'anjana', password: 'anjana123', label: 'Anjana (Accountant)' },
+  { username: 'priya_sales_hod',  password: 'Test@1234', label: 'Priya (HOD · Sales)' },
+  { username: 'vikram_it_hod',    password: 'Test@1234', label: 'Vikram (HOD · IT)' },
+  { username: 'ravi_accountant',  password: 'Test@1234', label: 'Ravi (Accountant)' },
+  { username: 'meera_finance_mgr', password: 'Test@1234', label: 'Meera (Finance Manager)' },
 ]

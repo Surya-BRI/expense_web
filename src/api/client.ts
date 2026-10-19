@@ -49,6 +49,18 @@ async function rawRequest(path: string, options: RequestInit): Promise<Response>
   return fetch(`${resolveApiBase()}${path}`, options)
 }
 
+// Plain POST with no bearer token — used for login (pre-auth) so the 401-retry
+// path in fetchJson doesn't interfere with bad-credentials errors.
+export async function postNoAuth(path: string, body: unknown): Promise<{ ok: boolean; status: number; body: unknown }> {
+  const res = await rawRequest(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  const parsed = await parseBody(res)
+  return { ok: res.ok, status: res.status, body: parsed }
+}
+
 function buildOptions(options: RequestInit, token: string | null): RequestInit {
   const headers = new Headers(options.headers)
   headers.set('Content-Type', 'application/json')

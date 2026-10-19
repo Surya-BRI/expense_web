@@ -5,7 +5,7 @@ import { ErrorBanner } from '../../components/ErrorBanner'
 import { Pagination } from '../../components/Pagination'
 import { SearchInput } from '../../components/SearchInput'
 import { ApiError } from '../../api/client'
-import { landingPathFor } from '../../routing/roleLanding'
+import { landingPathFor, queueStagesFor } from '../../routing/roleLanding'
 import { BulkApproveBar } from './BulkApproveBar'
 import { QueueRow } from './QueueRow'
 import { QueueSkeleton } from './QueueSkeleton'
@@ -36,9 +36,9 @@ export function ApprovalQueuePage() {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
   }
 
-  // Defensive frontend guard: the backend's stage query isn't confirmed to reject
-  // a mismatched role/stage combination, so redirect here rather than assume.
-  if (user && stage !== landingPathFor(user.role).split('/').pop()) {
+  // Redirect if the stage in the URL isn't one of this role's allowed queue stages.
+  const allowedStages = user ? queueStagesFor(user.role).map((s) => s.stage) : []
+  if (user && !allowedStages.includes(stage)) {
     return <Navigate to={landingPathFor(user.role)} replace />
   }
 
@@ -77,11 +77,13 @@ export function ApprovalQueuePage() {
                   <th className="px-3 py-2" />
                   <th className="px-3 py-2">Claim</th>
                   <th className="px-3 py-2">Employee</th>
+                  <th className="px-3 py-2">Region</th>
                   <th className="px-3 py-2">Vendor</th>
                   <th className="px-3 py-2">Amount</th>
                   <th className="px-3 py-2">Bill date</th>
                   <th className="px-3 py-2">Submitted</th>
                   <th className="px-3 py-2">Status</th>
+                  <th className="px-3 py-2">Flags</th>
                   <th className="px-3 py-2" />
                 </tr>
               </thead>
