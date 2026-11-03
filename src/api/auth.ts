@@ -49,6 +49,14 @@ export function me(): Promise<Omit<AuthUser, 'username'>> {
   return fetchJson('/api/auth/me')
 }
 
+/** Re-issues the session under another of the user's assigned companies (Flutter switchRegion). */
+export function switchRegion(regionCode: string): Promise<LoginResponse> {
+  return fetchJson('/api/auth/switch-region', {
+    method: 'POST',
+    body: JSON.stringify({ region_code: regionCode }),
+  })
+}
+
 export function logout(): Promise<{ ok: true }> {
   return fetchJson('/api/auth/logout', { method: 'POST' })
 }

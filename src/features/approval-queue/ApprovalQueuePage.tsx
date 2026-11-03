@@ -3,6 +3,8 @@ import { Navigate, useParams } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import { ErrorBanner } from '../../components/ErrorBanner'
 import { Pagination } from '../../components/Pagination'
+import { RegionFilterSelect } from '../../components/RegionFilterSelect'
+import { companyLabel, initialRegionFilter, regionFilterMatches, regionFilterOptions } from '../../lib/regionFilter'
 import { SearchInput } from '../../components/SearchInput'
 import { ApiError } from '../../api/client'
 import { landingPathFor, queueStagesFor } from '../../routing/roleLanding'
@@ -20,17 +22,23 @@ export function ApprovalQueuePage() {
   const { user } = useAuth()
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [search, setSearch] = useState('')
+  // null = all regions; starts on the signed-in company for multi-company people.
+  const [region, setRegion] = useState<string | null>(() => initialRegionFilter(user))
   const [selectedIds, setSelectedIds] = useState<number[]>([])
 
   const { data, isLoading, error } = useApprovalQueue(stage)
 
+  const regions = useMemo(() => regionFilterOptions(user, (data ?? []).map((t) => t.region_code)), [user, data])
+
   const filtered = useMemo(() => {
     if (!data) return []
-    const byStatus = statusFilter === 'all' ? data : data.filter((t) => t.status === statusFilter)
+    const byStatus = data
+      .filter((t) => statusFilter === 'all' || t.status === statusFilter)
+      .filter((t) => regionFilterMatches(region, regions, t.region_code))
     return sortByNewest(searchTransactions(byStatus, search))
-  }, [data, statusFilter, search])
+  }, [data, statusFilter, region, regions, search])
 
-  const { page, totalPages, pageItems, setPage } = usePagination(filtered, `${statusFilter}|${search}`)
+  const { page, totalPages, pageItems, setPage } = usePagination(filtered, `${statusFilter}|${region}|${search}`)
 
   function toggleSelect(id: number) {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
@@ -49,7 +57,10 @@ export function ApprovalQueuePage() {
           <h1 className="text-lg font-semibold capitalize text-brand-text">{stage} queue</h1>
           <SearchInput value={search} onChange={setSearch} />
         </div>
-        <StatusFilterChips value={statusFilter} onChange={setStatusFilter} />
+        <div className="flex flex-wrap items-center gap-3">
+          <StatusFilterChips value={statusFilter} onChange={setStatusFilter} />
+          {regions.length > 1 && <RegionFilterSelect options={regions} value={region} onChange={setRegion} />}
+        </div>
       </div>
 
       <BulkApproveBar stage={stage} selectedIds={selectedIds} onCleared={() => setSelectedIds([])} />
@@ -61,7 +72,11 @@ export function ApprovalQueuePage() {
 
       {!isLoading && !error && filtered.length === 0 && (
         <p className="py-8 text-center text-sm text-brand-textmuted">
-          {search ? 'No claims match your search.' : 'No claims in this queue.'}
+          {search
+            ? 'No claims match your search.'
+            : data && data.length > 0 && region !== null && regions.includes(region)
+              ? `No claims for ${companyLabel(region)} in this queue.`
+              : 'No claims in this queue.'}
         </p>
       )}
 

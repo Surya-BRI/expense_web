@@ -1,8 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchHistory } from '../../api/approvals'
 import { ApiError } from '../../api/client'
+import { useAuth } from '../../auth/useAuth'
 import { ErrorBanner } from '../../components/ErrorBanner'
+import { RegionFilterSelect } from '../../components/RegionFilterSelect'
+import { companyLabel, initialRegionFilter, regionFilterMatches, regionFilterOptions } from '../../lib/regionFilter'
 import { LoadingSpinner } from '../../components/LoadingSpinner'
 import { formatMoney } from '../../lib/money'
 import { stageLabel } from '../../lib/stageLabels'
@@ -37,14 +41,29 @@ const ACTION_COLOR: Record<string, string> = {
 }
 
 export function HistoryPage() {
-  const { data, isLoading, error } = useQuery({
+  const { user } = useAuth()
+  // null = all regions; starts on the signed-in company for multi-company people.
+  const [region, setRegion] = useState<string | null>(() => initialRegionFilter(user))
+  const { data: allData, isLoading, error } = useQuery({
     queryKey: ['approval-history'],
     queryFn: () => fetchHistory(100),
   })
 
+  const regions = useMemo(
+    () => regionFilterOptions(user, (allData ?? []).map((t) => t.region_code)),
+    [user, allData],
+  )
+  const data = useMemo(
+    () => allData?.filter((t) => regionFilterMatches(region, regions, t.region_code)),
+    [allData, region, regions],
+  )
+
   return (
     <div className="space-y-4">
-      <h1 className="text-lg font-semibold text-brand-text">My Approval History</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-lg font-semibold text-brand-text">My Approval History</h1>
+        {regions.length > 1 && <RegionFilterSelect options={regions} value={region} onChange={setRegion} />}
+      </div>
 
       {isLoading && <LoadingSpinner />}
       {error && (
@@ -52,7 +71,11 @@ export function HistoryPage() {
       )}
 
       {!isLoading && !error && data?.length === 0 && (
-        <p className="py-8 text-center text-sm text-brand-textmuted">No claims actioned yet.</p>
+        <p className="py-8 text-center text-sm text-brand-textmuted">
+          {allData && allData.length > 0 && region !== null && regions.includes(region)
+            ? `No claims actioned for ${companyLabel(region)}.`
+            : 'No claims actioned yet.'}
+        </p>
       )}
 
       {!isLoading && data && data.length > 0 && (

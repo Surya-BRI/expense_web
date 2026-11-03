@@ -8,7 +8,6 @@ const SKIP_REASON_LABEL: Record<SkipReason, string> = {
   not_awaiting_approval: 'not awaiting approval',
   not_your_stage: 'not at your approval stage',
   duplicate_flagged: 'flagged as a possible duplicate',
-  vendor_unresolved: 'vendor needs to be resolved first',
   over_bulk_threshold: 'amount exceeds the bulk-approve threshold',
 }
 

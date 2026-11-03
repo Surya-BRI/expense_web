@@ -8,6 +8,8 @@ export interface AuthUser {
   department_name: string | null
   email: string | null
   region_code: string | null
+  // Home company + Admin-ticked companies this person covers (login, refresh and /me).
+  allowed_regions?: string[]
   // Present on POST /login and /refresh's `user` object; ABSENT on GET /me.
   username?: string
 }
@@ -75,7 +77,6 @@ export interface Transaction {
   category_name: string | null
   vendor_id: number | null
   vendor_name: string | null
-  vendor_unmatched: boolean
   bill_date: string
   bill_number: string | null
   currency: string
@@ -116,7 +117,6 @@ export type SkipReason =
   | 'not_awaiting_approval'
   | 'not_your_stage'
   | 'duplicate_flagged'
-  | 'vendor_unresolved'
   | 'over_bulk_threshold'
 
 export interface BulkApproveResponse {

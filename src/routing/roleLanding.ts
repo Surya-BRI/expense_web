@@ -1,21 +1,24 @@
 import type { Role } from '../api/types'
 
-// v1 only supports hod and accountant logins for this web app (finance_manager
-// and admin are handled by the existing Flutter app) — see the project plan's
-// "finance_manager scoping" note.
+// Approver roles work their queues. Employees have no web screens (they use the Flutter app).
 const STAGE_BY_ROLE: Partial<Record<Role, string>> = {
   hod: 'hod',
   accountant: 'accountant',
   finance_manager: 'finance_manager',
 }
 
+// Admin is organisation setup (Companies, People), not an approver -- same as the Flutter
+// app, which keeps Admin out of the approval queues (lib/src/routing/app_router.dart).
+export const ADMIN_HOME = '/admin'
+
 export function landingPathFor(role: Role): string {
+  if (role === 'admin') return ADMIN_HOME
   const stage = STAGE_BY_ROLE[role]
   return stage ? `/queue/${stage}` : '/login'
 }
 
 export function isSupportedRole(role: Role): boolean {
-  return role in STAGE_BY_ROLE
+  return role === 'admin' || role in STAGE_BY_ROLE
 }
 
 // An HOD user can appear in both the hod stage (own-department claims) and the

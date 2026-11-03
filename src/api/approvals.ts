@@ -31,17 +31,3 @@ export function bulkApprove(transactionIds: number[]): Promise<BulkApproveRespon
 export function fetchHistory(limit = 100): Promise<HistoryTransaction[]> {
   return fetchJson(`/api/approvals/history?limit=${limit}`)
 }
-
-export function resolveVendor(
-  id: number,
-  payload: { vendor_id: number; create_new: false } | { vendor_id: null; create_new: true },
-): Promise<Transaction> {
-  return fetchJson(`/api/approvals/${id}/resolve-vendor`, {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  })
-}
-
-export function fetchVendors(): Promise<{ id: number; name: string }[]> {
-  return fetchJson('/api/vendors')
-}

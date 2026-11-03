@@ -5,9 +5,10 @@ import { RegionSelectionRequired } from '../../api/auth'
 import { useAuth } from '../../auth/useAuth'
 import { landingPathFor, isSupportedRole } from '../../routing/roleLanding'
 import { ErrorBanner } from '../../components/ErrorBanner'
-import { demoUsers } from './demoUsers'
+import { RegionLogo } from '../../components/RegionLogo'
+import { TestLoginPicker } from './TestLoginPicker'
 
-const REGION_LABELS: Record<string, string> = { UAE: 'UAE', KSA: 'KSA', OMAN: 'Oman' }
+const REGION_LABELS: Record<string, string> = { DUBAI: 'Dubai', UAE: 'UAE', KSA: 'KSA', OMAN: 'Oman' }
 
 export function LoginPage() {
   const { user, login } = useAuth()
@@ -23,7 +24,7 @@ export function LoginPage() {
   const [regionOptions, setRegionOptions] = useState<string[] | null>(null)
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null)
 
-  if (user) {
+  if (user && isSupportedRole(user.role)) {
     return <Navigate to={landingPathFor(user.role)} replace />
   }
 
@@ -56,7 +57,7 @@ export function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-brand-background px-4">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-sm space-y-4 rounded-2xl border border-brand-divider bg-brand-card p-6 shadow-sm"
+        className="w-full max-w-md space-y-4 rounded-2xl border border-brand-divider bg-brand-card p-6 shadow-sm"
       >
         <div className="text-center">
           <img
@@ -65,61 +66,50 @@ export function LoginPage() {
             className="mx-auto mb-3 h-16 w-auto object-contain"
           />
           <h1 className="text-lg font-semibold text-brand-text">Petty Cash and Expense Tracker</h1>
-          <p className="text-sm text-brand-textmuted">HOD / Accountant / Finance Manager sign in</p>
+          <p className="text-sm text-brand-textmuted">HOD / Accountant / Finance Manager / Admin sign in</p>
         </div>
 
         {error && <ErrorBanner message={error} />}
 
         {regionOptions && (
           <div className="space-y-2">
-            <p className="text-sm font-medium text-brand-text">Choose a region to sign in with</p>
-            <div className="flex gap-2">
+            <p className="text-sm font-medium text-brand-text">Choose a company to sign in with</p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {regionOptions.map((r) => (
                 <button
                   key={r}
                   type="button"
                   onClick={() => setSelectedRegion(r)}
-                  className={`flex-1 rounded-xl border py-2 text-sm font-semibold transition-colors ${
+                  aria-pressed={selectedRegion === r}
+                  className={`flex flex-col items-center gap-1.5 rounded-xl border-2 bg-white px-2 pb-1.5 pt-2 transition-colors ${
                     selectedRegion === r
-                      ? 'border-brand-darkblue bg-brand-darkblue text-white'
-                      : 'border-brand-divider bg-brand-card text-brand-text hover:bg-brand-lightblue'
+                      ? 'border-brand-darkblue ring-2 ring-brand-darkblue/20'
+                      : 'border-brand-divider hover:border-brand-darkblue/50'
                   }`}
                 >
-                  {REGION_LABELS[r] ?? r}
+                  <RegionLogo code={r} className="h-10 w-full" />
+                  <span
+                    className={`text-xs font-semibold ${selectedRegion === r ? 'text-brand-darkblue' : 'text-brand-textmuted'}`}
+                  >
+                    {REGION_LABELS[r] ?? r}
+                  </span>
                 </button>
               ))}
             </div>
           </div>
         )}
 
-        <div>
-          <label htmlFor="erpUser" className="block text-sm font-medium text-brand-text">
-            ERP user
-          </label>
-          <select
-            id="erpUser"
-            value={selectedErpUser}
-            onChange={(e) => {
-              const val = e.target.value
-              setSelectedErpUser(val)
-              const u = demoUsers.find((d) => d.username === val)
-              if (u) {
-                setUsername(u.username)
-                setPassword(u.password)
-                setRegionOptions(null)
-                setSelectedRegion(null)
-              }
-            }}
-            className="mt-1 w-full rounded-xl border border-brand-divider bg-brand-card px-3 py-2 text-sm text-brand-text focus:border-brand-darkblue focus:outline-none"
-          >
-            <option value="">— Select to autofill —</option>
-            {demoUsers.map((u) => (
-              <option key={u.username} value={u.username}>
-                {u.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <TestLoginPicker
+          value={selectedErpUser}
+          onPick={(u) => {
+            setSelectedErpUser(u.username)
+            setUsername(u.username)
+            setPassword(u.password)
+            setRegionOptions(null)
+            setSelectedRegion(null)
+            setError(null)
+          }}
+        />
 
         <div>
           <label htmlFor="username" className="block text-sm font-medium text-brand-text">

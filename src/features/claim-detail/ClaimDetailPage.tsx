@@ -10,7 +10,6 @@ import { stageLabel } from '../../lib/stageLabels'
 import { DecisionActions } from './DecisionActions'
 import { HistoryTimeline } from './HistoryTimeline'
 import { ReceiptViewer } from './ReceiptViewer'
-import { VendorResolvePanel } from './VendorResolvePanel'
 import { useClaimDetail } from './useClaimDetail'
 
 function LineItemsTable({
@@ -201,20 +200,6 @@ export function ClaimDetailPage() {
             </dl>
           </div>
 
-          {txn.vendor_unmatched && (
-            <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              <span className="font-semibold">Unmatched vendor:</span> "{txn.vendor_name}" was not found in the vendor list.
-              {stage === 'accountant' && awaitingThisStage ? (
-                <VendorResolvePanel
-                  claimId={txn.id}
-                  vendorRawText={txn.vendor_name ?? ''}
-                  onResolved={() => refetch()}
-                />
-              ) : (
-                <span> The accountant will resolve this.</span>
-              )}
-            </div>
-          )}
 
           {txn.duplicate_warning && (
             <div className="rounded-xl bg-brand-warningsoft px-4 py-3 text-sm text-brand-text">

@@ -68,11 +68,6 @@ export function QueueRow({
               Duplicate
             </span>
           )}
-          {txn.vendor_unmatched && (
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
-              Vendor
-            </span>
-          )}
         </div>
       </td>
       <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
