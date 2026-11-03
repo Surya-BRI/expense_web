@@ -90,7 +90,7 @@ export function ApprovalQueuePage() {
               <thead className="bg-brand-background text-xs uppercase text-brand-textmuted">
                 <tr>
                   <th className="px-3 py-2" />
-                  <th className="px-3 py-2">Claim</th>
+                  <th className="px-3 py-2">Invoice / claim</th>
                   <th className="px-3 py-2">Employee</th>
                   <th className="px-3 py-2">Region</th>
                   <th className="px-3 py-2">Vendor</th>

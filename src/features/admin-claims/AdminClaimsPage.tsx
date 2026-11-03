@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ApiError } from '../../api/client'
 import { ErrorBanner } from '../../components/ErrorBanner'
+import { ClaimRef } from '../../components/ClaimRef'
 import { LoadingSpinner } from '../../components/LoadingSpinner'
 import { Pagination } from '../../components/Pagination'
 import { SearchInput } from '../../components/SearchInput'
@@ -48,7 +49,7 @@ export function AdminClaimsPage() {
           <table className="w-full text-left">
             <thead className="bg-brand-background text-xs uppercase text-brand-textmuted">
               <tr>
-                <th className="px-3 py-2">Claim</th>
+                <th className="px-3 py-2">Invoice / claim</th>
                 <th className="px-3 py-2">Employee</th>
                 <th className="px-3 py-2">Vendor</th>
                 <th className="px-3 py-2">Amount</th>
@@ -65,7 +66,7 @@ export function AdminClaimsPage() {
                   className="cursor-pointer border-b border-brand-divider last:border-0 hover:bg-brand-lightblue"
                 >
                   <td className="px-3 py-3">
-                    <span className="font-medium text-brand-darkblue underline underline-offset-2">#{txn.id}</span>
+                    <ClaimRef id={txn.id} billNumber={txn.bill_number} link />
                   </td>
                   <td className="px-3 py-3 text-sm text-brand-text">{txn.employee_name}</td>
                   <td className="px-3 py-3 text-sm text-brand-text">{txn.vendor_name ?? '—'}</td>

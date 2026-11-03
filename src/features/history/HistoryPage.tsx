@@ -5,6 +5,7 @@ import { fetchHistory } from '../../api/approvals'
 import { ApiError } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
 import { ErrorBanner } from '../../components/ErrorBanner'
+import { ClaimRef } from '../../components/ClaimRef'
 import { RegionFilterSelect } from '../../components/RegionFilterSelect'
 import { companyLabel, initialRegionFilter, regionFilterMatches, regionFilterOptions } from '../../lib/regionFilter'
 import { LoadingSpinner } from '../../components/LoadingSpinner'
@@ -83,7 +84,7 @@ export function HistoryPage() {
           <table className="w-full text-left text-sm">
             <thead className="bg-brand-background text-xs uppercase text-brand-textmuted">
               <tr>
-                <th className="px-3 py-2">Claim</th>
+                <th className="px-3 py-2">Invoice / claim</th>
                 <th className="px-3 py-2">Employee</th>
                 <th className="px-3 py-2">Vendor</th>
                 <th className="px-3 py-2 text-right">Amount</th>
@@ -98,11 +99,8 @@ export function HistoryPage() {
               {data.map((txn) => (
                 <tr key={txn.id} className="border-t border-brand-divider hover:bg-brand-background">
                   <td className="px-3 py-2">
-                    <Link
-                      to={`/queue/${txn.my_action_stage}/${txn.id}`}
-                      className="font-medium text-brand-darkblue hover:underline"
-                    >
-                      #{txn.id}
+                    <Link to={`/queue/${txn.my_action_stage.split(':')[0]}/${txn.id}`} className="hover:opacity-80">
+                      <ClaimRef id={txn.id} billNumber={txn.bill_number} link />
                     </Link>
                   </td>
                   <td className="px-3 py-2 text-brand-text">{txn.employee_name}</td>

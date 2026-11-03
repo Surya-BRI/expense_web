@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { formatMoney } from '../../lib/money'
+import { ClaimRef } from '../../components/ClaimRef'
 import type { Transaction } from '../../api/types'
 
 const QUEUE_STATUS: Record<string, { label: string; style: string }> = {
@@ -35,7 +36,7 @@ export function QueueRow({
         />
       </td>
       <td className="px-3 py-3">
-        <span className="font-medium text-brand-darkblue underline underline-offset-2">#{txn.id}</span>
+        <ClaimRef id={txn.id} billNumber={txn.bill_number} link />
       </td>
       <td className="px-3 py-3 text-sm text-brand-text">{txn.employee_name}</td>
       <td className="px-3 py-3">

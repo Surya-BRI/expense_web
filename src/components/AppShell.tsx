@@ -12,6 +12,7 @@ import {
   PiUserCircle,
   PiUsers,
   PiUsersThree,
+  PiWallet,
 } from 'react-icons/pi'
 import { fetchUnreadCount } from '../api/notifications'
 import { CompanySwitcher } from './CompanySwitcher'
@@ -102,10 +103,16 @@ export function AppShell() {
                   {user.role === 'hod' ? 'Funds' : 'Top-ups'}
                 </NavLink>
                 {user.role === 'finance_manager' && (
-                  <NavLink to="/payments" className={navLinkClass}>
-                    <PiMoneyWavy className={ICON} aria-hidden />
-                    Payments
-                  </NavLink>
+                  <>
+                    <NavLink to="/funds" className={navLinkClass}>
+                      <PiWallet className={ICON} aria-hidden />
+                      Funds
+                    </NavLink>
+                    <NavLink to="/payments" className={navLinkClass}>
+                      <PiMoneyWavy className={ICON} aria-hidden />
+                      Payments
+                    </NavLink>
+                  </>
                 )}
               </nav>
             )}

@@ -1,9 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { fetchPayments, PAYMENT_METHODS, payableFor, recordPayment, type PaymentClaim } from '../../api/payments'
+import {
+  fetchPayments,
+  PAYMENT_METHODS,
+  payableFor,
+  recordPayment,
+  type PayableClaim,
+  type PaymentClaim,
+} from '../../api/payments'
 import { useAuth } from '../../auth/useAuth'
 import { ErrorBanner } from '../../components/ErrorBanner'
+import { ClaimRef } from '../../components/ClaimRef'
 import { LoadingSpinner } from '../../components/LoadingSpinner'
 import { RegionFilterSelect } from '../../components/RegionFilterSelect'
 import { formatMoney } from '../../lib/money'
@@ -101,7 +109,7 @@ export function PaymentsPage() {
               <table className="w-full text-left text-sm">
                 <thead className="bg-brand-background text-xs uppercase text-brand-textmuted">
                   <tr>
-                    <th className="px-3 py-2">Claim</th>
+                    <th className="px-3 py-2">Invoice / claim</th>
                     <th className="px-3 py-2">Employee</th>
                     <th className="px-3 py-2">Region</th>
                     <th className="px-3 py-2">Vendor</th>
@@ -119,11 +127,11 @@ export function PaymentsPage() {
                       <tr key={c.id} className="border-t border-brand-divider hover:bg-brand-background">
                         <td className="px-3 py-2">
                           {user?.role === 'finance_manager' ? (
-                            <Link to={`/queue/finance_manager/${c.id}`} className="font-medium text-brand-darkblue hover:underline">
-                              #{c.id}
+                            <Link to={`/queue/finance_manager/${c.id}`} className="hover:opacity-80">
+                              <ClaimRef id={c.id} billNumber={c.bill_number} link />
                             </Link>
                           ) : (
-                            <span className="font-medium text-brand-text">#{c.id}</span>
+                            <ClaimRef id={c.id} billNumber={c.bill_number} />
                           )}
                         </td>
                         <td className="px-3 py-2 text-brand-text">{c.employee_name}</td>
@@ -183,13 +191,13 @@ export function PaymentsPage() {
   )
 }
 
-/** Port of _RecordPaymentSheet (payment_sheet.dart). */
-function RecordPaymentDialog({
+/** Port of _RecordPaymentSheet (payment_sheet.dart). Also used on the claim page. */
+export function RecordPaymentDialog({
   claim,
   onClose,
   onSaved,
 }: {
-  claim: PaymentClaim
+  claim: PayableClaim
   onClose: () => void
   onSaved: () => void
 }) {
@@ -238,7 +246,7 @@ function RecordPaymentDialog({
     <Modal title="Record payment" onClose={onClose}>
       <div className="space-y-3">
         <p className="text-sm text-brand-textmuted">
-          Claim #{claim.id} · {claim.employee_name}
+          {claim.bill_number?.trim() ? `Invoice ${claim.bill_number.trim()} · ` : ''}Claim #{claim.id} · {claim.employee_name}
         </p>
         <div className="flex items-center justify-between rounded-md bg-brand-background px-3 py-2">
           <span className="text-sm text-brand-textmuted">Amount to pay</span>

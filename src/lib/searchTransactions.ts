@@ -8,6 +8,7 @@ export function searchTransactions(transactions: Transaction[], query: string): 
   return transactions.filter((t) => {
     const haystack = [
       String(t.id),
+      t.bill_number,
       t.employee_name,
       t.vendor_name,
       t.category_name,

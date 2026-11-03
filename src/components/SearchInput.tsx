@@ -1,7 +1,7 @@
 export function SearchInput({
   value,
   onChange,
-  placeholder = 'Search by employee, vendor…',
+  placeholder = 'Search invoice no., employee, vendor…',
 }: {
   value: string
   onChange: (value: string) => void

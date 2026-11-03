@@ -17,12 +17,13 @@ export interface PaymentRecord {
   recorded_at: string | null
 }
 
+/** A claim that can be paid: any claim, plus what is owed when GET /api/payments sent it. */
+export type PayableClaim = Transaction & { payable_amount?: number | null; payable_currency?: string | null }
+
 /** A claim row from GET /api/payments (transaction_to_dict + what is owed + the payment). */
 export interface PaymentClaim extends Transaction {
   payable_amount?: number | null
   payable_currency?: string | null
-  base_currency?: string | null
-  total_amount_base?: number | null
   payment: PaymentRecord | null
 }
 
@@ -43,7 +44,7 @@ export const PAYMENT_METHODS: Record<string, string> = {
 }
 
 /** What the employee is owed, in the company's base currency (payment_sheet.dart payableFor). */
-export function payableFor(c: PaymentClaim): { amount: number; currency: string } {
+export function payableFor(c: PayableClaim): { amount: number; currency: string } {
   if (c.payable_amount != null && c.payable_currency) return { amount: c.payable_amount, currency: c.payable_currency }
   if (c.total_amount_base != null && c.base_currency) return { amount: c.total_amount_base, currency: c.base_currency }
   return { amount: c.total_amount ?? c.amount + c.vat_amount, currency: c.currency }

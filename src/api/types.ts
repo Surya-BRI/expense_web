@@ -41,6 +41,7 @@ export interface HistoryItem {
   id: number
   stage: string
   actor_id: number
+  actor_name?: string | null
   action: string
   remarks: string | null
   created_at: string
@@ -63,6 +64,12 @@ export interface LineItem {
   category_id: number | null
   category_name: string | null
   op_number: string | null
+  /** In the company's base currency; null while a foreign-currency bill has no rate. */
+  amount_base?: number | null
+  /** Set when this line belongs to another department than the employee's: that
+   * department's HOD approves it (department_hod stage) and its petty cash pays for it. */
+  owning_department_id?: number | null
+  owning_department_name?: string | null
 }
 
 export interface Transaction {
@@ -86,7 +93,27 @@ export interface Transaction {
   total_amount: number
   op_number: string | null
   status: ClaimStatus
+  /** Base stage (hod | department_hod | accountant | finance_manager). */
   current_stage: string | null
+  /** Full stage key, e.g. 'department_hod:7' -- matches stage_sequence / stage_labels. */
+  current_stage_key?: string | null
+  /** Stage key -> label with the department name ("Department HOD (IT)"). */
+  stage_labels?: Record<string, string>
+  /** The bill in its company's base currency (what petty cash is debited / reimbursed). */
+  base_currency?: string | null
+  total_amount_base?: number | null
+  /** not_applicable (petty cash) | unpaid | paid. */
+  payment_status?: string | null
+  payment?: {
+    amount: number
+    currency: string
+    payment_method: string
+    payment_method_label: string | null
+    payment_reference: string
+    payment_date: string | null
+    paid_by_name: string | null
+    remarks: string | null
+  } | null
   dispute_returned: boolean
   remarks: string | null
   duplicate_flag: boolean

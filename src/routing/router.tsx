@@ -8,6 +8,7 @@ import { PeoplePage } from '../features/admin/PeoplePage'
 import { PersonPage } from '../features/admin/PersonPage'
 import { ApprovalQueuePage } from '../features/approval-queue/ApprovalQueuePage'
 import { ClaimDetailPage } from '../features/claim-detail/ClaimDetailPage'
+import { DepartmentFundsPage } from '../features/funds/DepartmentFundsPage'
 import { TopupsPage } from '../features/funds/TopupsPage'
 import { HistoryPage } from '../features/history/HistoryPage'
 import { PaymentsPage } from '../features/payments/PaymentsPage'
@@ -56,6 +57,11 @@ export const router = createBrowserRouter([
         // Top-ups / Funds: as in the Flutter drawer -- HOD (Funds), Accountant, FM, Admin.
         element: <RequireRole allowed={['hod', 'accountant', 'finance_manager', 'admin']} />,
         children: [{ element: <AppShell />, children: [{ path: '/topups', element: <TopupsPage /> }] }],
+      },
+      {
+        // Department funds, read-only: Finance Manager, companies they cover.
+        element: <RequireRole allowed={['finance_manager']} />,
+        children: [{ element: <AppShell />, children: [{ path: '/funds', element: <DepartmentFundsPage /> }] }],
       },
       {
         // Recording reimbursement payments: Finance Manager and Admin.
