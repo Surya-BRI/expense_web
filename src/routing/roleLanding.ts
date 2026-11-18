@@ -4,6 +4,7 @@ import type { Role } from '../api/types'
 const STAGE_BY_ROLE: Partial<Record<Role, string>> = {
   hod: 'hod',
   accountant: 'accountant',
+  head_accountant: 'head_accountant',
   finance_manager: 'finance_manager',
 }
 
@@ -31,11 +32,6 @@ export function queueStagesFor(role: Role): { stage: string; label: string }[] {
       { stage: 'department_hod', label: 'Dept HOD Queue' },
     ]
   }
-  if (role === 'accountant') {
-    return [{ stage: 'accountant', label: 'My Queue' }]
-  }
-  if (role === 'finance_manager') {
-    return [{ stage: 'finance_manager', label: 'My Queue' }]
-  }
-  return []
+  const stage = STAGE_BY_ROLE[role]
+  return stage ? [{ stage, label: 'My Queue' }] : []
 }

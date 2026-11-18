@@ -3,6 +3,7 @@ const STAGE_LABELS: Record<string, string> = {
   hod: 'HOD',
   department_hod: 'Department HOD',
   accountant: 'Accountant',
+  head_accountant: 'Head of Accountant',
   finance_manager: 'Finance Manager',
 }
 

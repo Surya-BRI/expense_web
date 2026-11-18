@@ -1,4 +1,5 @@
 import type { PettyCashFund, RegionConfig } from '../../api/adminOrg'
+import { erpCompanyLabel, isErpCompany } from '../../lib/companyNames'
 
 // Ports of lib/src/features/admin/admin_providers.dart, topups_screen.dart and
 // admin_people_screen.dart helpers. Kept out of the .tsx files so those export components only.
@@ -14,12 +15,16 @@ export function sortRegions(regions: RegionConfig[]): RegionConfig[] {
   return [...regions].sort((a, b) => regionRank(a.region_code) - regionRank(b.region_code))
 }
 
+/** ERP's company code and name ("BRC · Blue Rhine Contracting"); a company ERP doesn't know
+ * keeps the name Admin gave it. Same as the Flutter app's companyTitle. */
 export function companyTitle(region: RegionConfig): string {
+  if (isErpCompany(region.region_code)) return erpCompanyLabel(region.region_code)
   const name = (region.company_name ?? '').trim()
   return name.length > 0 ? name : region.region_name
 }
 
 export function fundCompanyName(fund: PettyCashFund): string {
+  if (isErpCompany(fund.region_code)) return erpCompanyLabel(fund.region_code)
   const company = (fund.company_name ?? fund.region_name ?? '').trim()
   if (company.length > 0) return company
   const code = (fund.region_code ?? '').trim()
@@ -114,6 +119,8 @@ export function roleLabel(role: string | null | undefined): string {
       return 'Finance Manager'
     case 'accountant':
       return 'Accountant'
+    case 'head_accountant':
+      return 'Head of Accountant'
     case 'hod':
       return 'Head of Department'
     case 'admin':

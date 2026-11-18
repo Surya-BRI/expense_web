@@ -4,6 +4,7 @@ import { ErrorBanner } from '../../components/ErrorBanner'
 import { LoadingSpinner } from '../../components/LoadingSpinner'
 import { approverInitials, companyTitle, errorMessage } from './adminHelpers'
 import { Avatar } from './AdminUi'
+import { SlaTimeButton } from './SlaTimeDialog'
 import { useRegionApprovers } from './useAdminQueries'
 
 const NO_DEPT = 'No department'
@@ -19,6 +20,7 @@ export function ApproversTab({ region }: { region: RegionConfig }) {
 
   return (
     <div className="space-y-5">
+      <SlaTimeButton regionId={region.id} />
       <div className="rounded-xl bg-brand-lightblue p-4">
         <div className="text-[15px] font-extrabold text-brand-text">Who approves {company} bills</div>
         <p className="mt-1.5 text-[12.5px] leading-relaxed text-brand-textmuted">
@@ -34,35 +36,79 @@ export function ApproversTab({ region }: { region: RegionConfig }) {
         </p>
       </div>
 
-      <ApproverSection
-        title="1. Department HOD"
-        subtitle="Approves bills from their own department. IT items on a Sales bill go to the IT HOD after Sales."
-        emptyText={`No HOD for ${company} — those bills go to Admin.`}
-        people={roles?.hod ?? []}
-        company={company}
-        groupByDepartment
-        why={(p) => {
-          const dept = (p.department_name ?? '').trim()
-          return dept.length === 0 ? 'Approves department bills' : `Approves ${dept} bills`
-        }}
-      />
-      <ApproverSection
-        title="2. Accountant"
-        subtitle="Checks every bill for this company after the HODs."
-        emptyText={`No Accountant for ${company} — those bills go to Admin.`}
-        people={roles?.accountant ?? []}
-        company={company}
-        why={() => `Checks all ${company} bills`}
-      />
-      <ApproverSection
-        title="3. Finance Manager"
-        subtitle="Final approval. Petty cash is deducted here. Reimbursements then wait for payment."
-        emptyText={`No Finance Manager for ${company} — those bills go to Admin.`}
-        people={roles?.finance_manager ?? []}
-        company={company}
-        why={() => `Final approval for ${company}`}
-      />
+      {region.pca_model === 'site' ? (
+        // Blue Rhine Contracting: no HODs -- Accountant -> Head of Accountant -> Finance Manager.
+        <>
+          <ApproverSection
+            title="1. Accountant"
+            subtitle="Checks every bill for this company first (there are no HODs here)."
+            emptyText={`No Accountant for ${company} — those bills go to Admin.`}
+            people={roles?.accountant ?? []}
+            company={company}
+            why={() => `Checks all ${company} bills`}
+          />
+          <ApproverSection
+            title="2. Head of Accountant"
+            subtitle="Second accounts check after the Accountant."
+            emptyText={`No Head of Accountant for ${company} — those bills go to Admin.`}
+            people={roles?.head_accountant ?? []}
+            company={company}
+            why={() => `Second check for ${company}`}
+          />
+          <FinanceSection company={company} people={roles?.finance_manager ?? []} title="3. Finance Manager" />
+        </>
+      ) : region.pca_model === 'employee' ? (
+        // Professional Signs: HOD -> Accounts Manager (no Accountant step).
+        <>
+          <HodSection company={company} people={roles?.hod ?? []} />
+          <FinanceSection company={company} people={roles?.finance_manager ?? []} title="2. Accounts Manager" />
+        </>
+      ) : (
+        <>
+          <HodSection company={company} people={roles?.hod ?? []} />
+          <ApproverSection
+            title="2. Accountant"
+            subtitle="Checks every bill for this company after the HODs."
+            emptyText={`No Accountant for ${company} — those bills go to Admin.`}
+            people={roles?.accountant ?? []}
+            company={company}
+            why={() => `Checks all ${company} bills`}
+          />
+          <FinanceSection company={company} people={roles?.finance_manager ?? []} title="3. Finance Manager" />
+        </>
+      )}
     </div>
+  )
+}
+
+function HodSection({ company, people }: { company: string; people: RegionApprover[] }) {
+  return (
+    <ApproverSection
+      title="1. Department HOD"
+      subtitle="Approves bills from their own department. IT items on a Sales bill go to the IT HOD after Sales."
+      emptyText={`No HOD for ${company} — those bills go to Admin.`}
+      people={people}
+      company={company}
+      groupByDepartment
+      why={(p) => {
+        const dept = (p.department_name ?? '').trim()
+        return dept.length === 0 ? 'Approves department bills' : `Approves ${dept} bills`
+      }}
+    />
+  )
+}
+
+function FinanceSection({ company, people, title }: { company: string; people: RegionApprover[]; title: string }) {
+  const name = title.replace(/^\d+\.\s*/, '')
+  return (
+    <ApproverSection
+      title={title}
+      subtitle="Final approval. Petty cash is deducted here. Reimbursements then wait for payment."
+      emptyText={`No ${name} for ${company} — those bills go to Admin.`}
+      people={people}
+      company={company}
+      why={() => `Final approval for ${company}`}
+    />
   )
 }
 

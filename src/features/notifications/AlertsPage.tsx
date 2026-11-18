@@ -6,7 +6,7 @@ import {
   markNotificationRead,
   type NotificationRow,
 } from '../../api/notifications'
-import type { Role } from '../../api/types'
+import { isApproverRole, type Role } from '../../api/types'
 import { useAuth } from '../../auth/useAuth'
 import { ErrorBanner } from '../../components/ErrorBanner'
 import { LoadingSpinner } from '../../components/LoadingSpinner'
@@ -31,7 +31,7 @@ const TITLE_BY_TYPE: Record<string, string> = {
   test: 'Test notification',
 }
 
-type Kind = 'submitted' | 'approved' | 'rejected' | 'paid' | 'info'
+type Kind = 'submitted' | 'approved' | 'rejected' | 'paid' | 'overdue' | 'info'
 
 const KIND_BY_TYPE: Record<string, Kind> = {
   submission: 'submitted',
@@ -46,11 +46,32 @@ const KIND_BY_TYPE: Record<string, Kind> = {
 const APPROVER_FACING = new Set(['submission', 'approval_pending', 'resubmit'])
 
 // Top-up steps ('topup_verified_12') and low-fund alerts ('fund_low_3_0') open Top-ups / Funds.
-const isFundType = (type: string) => type.startsWith('topup_') || type.startsWith('fund_low_')
+// Professional Signs advances ('pca_advance_paid_7', 'pca_accounts_cash_low_2_0') open Advances;
+// Blue Rhine Contracting petty cash ('pca_site_requested_4') opens Petty cash.
+const isPcaType = (type: string) => type.startsWith('pca_')
+const isFundType = (type: string) => type.startsWith('topup_') || type.startsWith('fund_low_') || isPcaType(type)
+
+function fundRoute(type: string): string {
+  if (type.startsWith('pca_site_')) return type.startsWith('pca_site_set_') ? '/site-pca' : '/site-pca?tab=topups'
+  if (type.startsWith('pca_accounts_cash_')) return '/advances?tab=accounts-cash'
+  if (isPcaType(type)) return '/advances'
+  return '/topups'
+}
+
+// SLA alerts carry the step and a visit stamp: 'slaw_hod_1795..' (overdue warning to the
+// approver) and 'slae_hod_1795..' (escalation to the next step + Admin).
+const isSlaWarning = (type: string) => type.startsWith('slaw_')
+const isSlaEscalation = (type: string) => type.startsWith('slae_')
+const isSla = (type: string) => isSlaWarning(type) || isSlaEscalation(type)
+
+// "You are the backup approver for Rashid" ('delegation_12'): opens the backup's own queue.
+const isBackupType = (type: string) => type.startsWith('delegation_')
 
 function fundKind(type: string): Kind {
-  if (type.startsWith('topup_approved')) return 'approved'
-  if (type.startsWith('topup_rejected') || type.startsWith('topup_returned')) return 'rejected'
+  if (type.startsWith('topup_approved') || type.includes('_paid_')) return 'approved'
+  if (type.startsWith('topup_rejected') || type.startsWith('topup_returned') || type.includes('_rejected_')) {
+    return 'rejected'
+  }
   return 'info'
 }
 
@@ -59,6 +80,7 @@ const KIND_STYLE: Record<Kind, { icon: string; style: string }> = {
   rejected: { icon: '✕', style: 'bg-red-50 text-brand-danger' },
   paid: { icon: '$', style: 'bg-brand-lightblue text-brand-darkblue' },
   submitted: { icon: '•', style: 'bg-orange-100 text-brand-orange' },
+  overdue: { icon: '!', style: 'bg-red-50 text-brand-danger' },
   info: { icon: '•', style: 'bg-orange-100 text-brand-orange' },
 }
 
@@ -69,14 +91,15 @@ const KIND_STYLE: Record<Kind, { icon: string; style: string }> = {
  */
 function routeFor(row: NotificationRow, role: Role): string | null {
   const type = row.type ?? 'test'
-  if (isFundType(type)) return '/topups'
-  if (row.transaction_id == null || type === 'test') return null
+  if (isFundType(type)) return fundRoute(type)
   const stages = queueStagesFor(role).map((s) => s.stage)
-  if (stages.length === 0) return null
+  if (isBackupType(type)) return stages.length > 0 ? `/queue/${stages[0]}` : null
+  if (row.transaction_id == null || type === 'test') return null
+  if (stages.length === 0) return role === 'admin' && isSla(type) ? '/admin/aging' : null
+  // Actionable (the bill is still at a step this user acts on, e.g. as someone's backup):
+  // open it at that step so the decision buttons show.
   const stage =
-    APPROVER_FACING.has(type) && row.actionable && row.current_stage && stages.includes(row.current_stage)
-      ? row.current_stage
-      : stages[0]
+    (APPROVER_FACING.has(type) || isSla(type)) && row.actionable && row.current_stage ? row.current_stage : stages[0]
   return `/queue/${stage}/${row.transaction_id}`
 }
 
@@ -98,7 +121,7 @@ export function AlertsPage() {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const role = user?.role ?? 'employee'
-  const approver = role === 'hod' || role === 'accountant' || role === 'finance_manager'
+  const approver = isApproverRole(role)
 
   const { data, isLoading, error } = useQuery({
     queryKey: notificationKeys.list,
@@ -158,8 +181,16 @@ export function AlertsPage() {
             const type = row.type ?? 'test'
             const message = row.message ?? ''
             const fund = isFundType(type)
-            const title = TITLE_BY_TYPE[type] ?? (fund ? message.split('\n\n')[0].trim() : 'Notification')
-            const kind = KIND_BY_TYPE[type] ?? (fund ? fundKind(type) : 'info')
+            const title =
+              TITLE_BY_TYPE[type] ??
+              (isSlaWarning(type)
+                ? 'Approval overdue'
+                : isSlaEscalation(type)
+                  ? 'Approval escalated'
+                  : fund || isBackupType(type)
+                    ? message.split('\n\n')[0].trim()
+                    : 'Notification')
+            const kind = KIND_BY_TYPE[type] ?? (isSla(type) ? 'overdue' : fund ? fundKind(type) : 'info')
             const unread = row.status !== 'read'
             const route = routeFor(row, role)
             const when = formatWhen(row.sent_at)

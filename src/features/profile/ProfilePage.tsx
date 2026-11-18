@@ -18,7 +18,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { fetchMyFunds, fetchTopups } from '../../api/adminOrg'
 import { fetchHistory, fetchQueue } from '../../api/approvals'
 import { fetchPayments } from '../../api/payments'
-import type { AuthUser } from '../../api/types'
+import { isApproverRole, type AuthUser } from '../../api/types'
 import { useAuth } from '../../auth/useAuth'
 import { RegionLogo } from '../../components/RegionLogo'
 import { formatMoney } from '../../lib/money'
@@ -30,6 +30,7 @@ import { useAdminRegions } from '../admin/useAdminQueries'
 const ROLE_LABEL: Record<string, string> = {
   finance_manager: 'Finance Manager',
   accountant: 'Accountant',
+  head_accountant: 'Head of Accountant',
   hod: 'Head of Department',
   admin: 'Admin',
   employee: 'Employee',
@@ -103,10 +104,12 @@ function AtAGlance({ user }: { user: AuthUser }) {
   const queues = useQueries({
     queries: stages.map((s) => ({ queryKey: ['queue', s.stage], queryFn: () => fetchQueue(s.stage) })),
   })
+  // Head of Accountant (Blue Rhine Contracting) has no department top-ups.
+  const showTopups = role !== 'employee' && role !== 'head_accountant'
   const topups = useQuery({
     queryKey: ['topups'],
     queryFn: () => fetchTopups(),
-    enabled: role !== 'employee',
+    enabled: showTopups,
   })
   const payments = useQuery({
     queryKey: ['payments', 'unpaid', null],
@@ -141,7 +144,7 @@ function AtAGlance({ user }: { user: AuthUser }) {
             value={count(queues[i]?.data?.length)}
           />
         ))}
-        {role !== 'employee' && (
+        {showTopups && (
           <Stat
             to="/topups"
             icon={role === 'hod' ? <PiWallet className="h-5 w-5" /> : <PiHandCoins className="h-5 w-5" />}
@@ -255,6 +258,15 @@ function MyPots() {
                     left of {formatMoney(f.approved_limit, f.currency)}
                   </span>
                 </div>
+                {/* Same figure a new bill is checked against: bills in approval are held. */}
+                {(f.pending_bills ?? 0) > 0.004 && (
+                  <div className="mt-0.5 text-xs text-brand-textmuted">
+                    <span className="font-semibold text-brand-darkblue">
+                      {formatMoney(Math.max(0, f.uncommitted ?? available - (f.pending_bills ?? 0)), f.currency)} can use now
+                    </span>{' '}
+                    · {formatMoney(f.pending_bills ?? 0, f.currency)} held for bills waiting for approval
+                  </div>
+                )}
                 <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-brand-background">
                   <div className="h-full rounded-full bg-brand-orange" style={{ width: `${used}%` }} />
                 </div>
@@ -280,7 +292,7 @@ export function ProfilePage() {
     regions.data?.find((r) => r.region_code.toUpperCase() === code.toUpperCase())?.company_name?.trim() ||
     companyLabel(code)
   const covered = [...new Set([current, ...(user.allowed_regions ?? []).map((c) => c.toUpperCase())])].filter(Boolean)
-  const isApprover = user.role === 'hod' || user.role === 'accountant' || user.role === 'finance_manager'
+  const isApprover = isApproverRole(user.role)
 
   return (
     <div className="space-y-6">

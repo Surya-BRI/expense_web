@@ -1,5 +1,11 @@
 # Setup & Integration — Accountant/HOD Web App
 
+> **Outdated in parts — read [`WEB_PORTAL.md`](WEB_PORTAL.md) first.** This file describes the
+> first HOD/Accountant-only version. Since then the portal also serves Finance Manager and Admin,
+> has Alerts, Payments (`/api/payments`), SLA time, Aging report and backup approvers, and no
+> longer uses the one-click `/mark-paid` route. Auth, folder layout and design tokens below are
+> still accurate.
+
 > How this repo (`expense_app_web`) connects to the existing Flutter + FastAPI expense app,
 > what was built, and how to pick this back up later. Companion to
 > [`ACCOUNTANT_HOD_WEB_APP_PLAN.md`](../expense_app/assets/docs/ACCOUNTANT_HOD_WEB_APP_PLAN.md)

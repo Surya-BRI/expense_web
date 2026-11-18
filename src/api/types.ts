@@ -1,4 +1,13 @@
-export type Role = 'employee' | 'hod' | 'accountant' | 'finance_manager' | 'admin'
+// head_accountant: Blue Rhine Contracting's second accounts step (Accountant -> Head of
+// Accountant -> Finance Manager).
+export type Role = 'employee' | 'hod' | 'accountant' | 'head_accountant' | 'finance_manager' | 'admin'
+
+/** Every approver role (works an approval queue). */
+export const APPROVER_ROLES: Role[] = ['hod', 'accountant', 'head_accountant', 'finance_manager']
+
+export function isApproverRole(role: string | null | undefined): boolean {
+  return APPROVER_ROLES.includes((role ?? '') as Role)
+}
 
 export interface AuthUser {
   id: number
@@ -12,6 +21,9 @@ export interface AuthUser {
   allowed_regions?: string[]
   // Present on POST /login and /refresh's `user` object; ABSENT on GET /me.
   username?: string
+  /** Signed-in company's petty cash model: department (BRI, Oman) | employee (Professional
+   * Signs advances) | site (Blue Rhine Contracting, one petty cash per employee). */
+  pca_model?: 'department' | 'employee' | 'site' | string
 }
 
 export interface LoginResponse {
@@ -104,6 +116,20 @@ export interface Transaction {
   total_amount_base?: number | null
   /** not_applicable (petty cash) | unpaid | paid. */
   payment_status?: string | null
+  /** Professional Signs (KSA): paid as Process 1 / Process 2 instead of a payment method. */
+  pays_by_process?: boolean
+  /** The step that books the expense journal (Professional Signs: finance_manager = Accounts
+   * Manager); null = no journal step in this company. */
+  journal_stage?: string | null
+  /** EJV | EJVB, and its ERP number, once recorded. */
+  journal_type?: string | null
+  journal_reference?: string | null
+  /** When the current step's SLA time runs out (naive UTC ISO); null when not waiting on an approver. */
+  stage_due_at?: string | null
+  /** 0 on time, 1 approver warned (overdue), 2 escalated to the next step + Admin. */
+  sla_state?: number
+  /** Approval queue only: the approvers this user is standing in for (they're their backup today). */
+  covering_for?: string[]
   payment?: {
     amount: number
     currency: string

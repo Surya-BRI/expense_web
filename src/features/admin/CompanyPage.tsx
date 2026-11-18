@@ -9,14 +9,42 @@ import { CodeChip, inputClass, Modal, OutlineButton, PrimaryButton } from './Adm
 import { ApproversTab } from './ApproversTab'
 import { DepartmentsTab } from './DepartmentsTab'
 import { TopupsTab } from './TopupsTab'
+import { SitePotsPanel } from '../site-pca/SitePotsPanel'
+import { SiteTopupsPanel } from '../site-pca/SiteTopupsPanel'
+import { PcaDepartmentsPanel } from '../advances/PcaDepartmentsPanel'
+import { PcaRequestsPanel } from '../advances/PcaRequestsPanel'
+import { AccountsCashPanel } from '../advances/AccountsCashPanel'
 import { adminKeys, useAdminRegions } from './useAdminQueries'
 
-const TABS = [
-  { key: 'departments', label: 'Departments' },
-  { key: 'topups', label: 'Top-ups' },
-  { key: 'approvers', label: 'Approvers' },
-] as const
-type TabKey = (typeof TABS)[number]['key']
+type TabKey = 'departments' | 'topups' | 'approvers' | 'site-employees' | 'site-topups' | 'pca-employees' | 'pca-requests' | 'accounts-cash'
+
+/**
+ * Tabs per company petty cash model, as admin_company_screen.dart: department pots (BRI, Oman),
+ * one petty cash per employee (Blue Rhine Contracting: site) or employee advances + Accounts
+ * cash (Professional Signs: employee).
+ */
+function tabsFor(region: RegionConfig): { key: TabKey; label: string }[] {
+  if (region.pca_model === 'site') {
+    return [
+      { key: 'site-employees', label: 'Employees' },
+      { key: 'site-topups', label: 'Top-ups' },
+      { key: 'approvers', label: 'Approvers' },
+    ]
+  }
+  if (region.pca_model === 'employee') {
+    return [
+      { key: 'pca-employees', label: 'Employees' },
+      { key: 'pca-requests', label: 'Requests' },
+      { key: 'accounts-cash', label: 'Accounts cash' },
+      { key: 'approvers', label: 'Approvers' },
+    ]
+  }
+  return [
+    { key: 'departments', label: 'Departments' },
+    { key: 'topups', label: 'Top-ups' },
+    { key: 'approvers', label: 'Approvers' },
+  ]
+}
 
 /** Port of lib/src/features/admin/admin_company_screen.dart (logo upload skipped). */
 export function CompanyPage() {
@@ -49,8 +77,9 @@ function BackLink() {
 
 function CompanyWorkspace({ region }: { region: RegionConfig }) {
   const [params, setParams] = useSearchParams()
+  const tabs = tabsFor(region)
   const raw = params.get('tab')
-  const tab: TabKey = TABS.some((t) => t.key === raw) ? (raw as TabKey) : 'departments'
+  const tab: TabKey = tabs.some((t) => t.key === raw) ? (raw as TabKey) : tabs[0].key
   const [editing, setEditing] = useState(false)
 
   return (
@@ -69,7 +98,7 @@ function CompanyWorkspace({ region }: { region: RegionConfig }) {
       </div>
 
       <div role="tablist" className="flex gap-1 border-b border-brand-divider">
-        {TABS.map((t) => {
+        {tabs.map((t) => {
           const active = t.key === tab
           return (
             <button
@@ -77,7 +106,8 @@ function CompanyWorkspace({ region }: { region: RegionConfig }) {
               type="button"
               role="tab"
               aria-selected={active}
-              onClick={() => setParams(t.key === 'departments' ? {} : { tab: t.key }, { replace: true })}
+              // A fresh tab (no ?employee= etc. left over from the previous one).
+              onClick={() => setParams(t.key === tabs[0].key ? {} : { tab: t.key }, { replace: true })}
               className={`-mb-px border-b-2 px-4 py-2 text-sm font-semibold ${
                 active
                   ? 'border-brand-orange text-brand-darkblue'
@@ -92,6 +122,11 @@ function CompanyWorkspace({ region }: { region: RegionConfig }) {
 
       {tab === 'departments' && <DepartmentsTab region={region} />}
       {tab === 'topups' && <TopupsTab region={region} />}
+      {tab === 'site-employees' && <SitePotsPanel region={region} />}
+      {tab === 'site-topups' && <SiteTopupsPanel region={region} />}
+      {tab === 'pca-employees' && <PcaDepartmentsPanel region={region} />}
+      {tab === 'pca-requests' && <PcaRequestsPanel region={region} />}
+      {tab === 'accounts-cash' && <AccountsCashPanel regionId={region.id} />}
       {tab === 'approvers' && <ApproversTab region={region} />}
 
       {editing && <EditCompanyNameDialog region={region} onClose={() => setEditing(false)} />}

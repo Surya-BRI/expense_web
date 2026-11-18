@@ -197,8 +197,11 @@ export function ClaimDetailPage() {
   // Same rules as the Flutter review screen (approval_detail_screen.dart).
   const awaitingThisStage = txn.status === 'submitted' && txn.current_stage === stage
   const withEmployee = txn.status === 'disputed'
-  // Petty cash is settled from the fund at final approval -- only reimbursements get paid.
-  const awaitingPayment = txn.status === 'approved' && txn.type !== 'petty_cash' && !txn.payment
+  // Petty cash is settled from the fund at final approval -- only reimbursements get paid, plus
+  // Professional Signs' petty cash (paying it refills the advance). The server says which.
+  const awaitingPayment =
+    txn.status === 'approved' && !txn.payment &&
+    (txn.payment_status ? txn.payment_status === 'unpaid' : txn.type !== 'petty_cash')
   const canRecordPayment = awaitingPayment && (user?.role === 'finance_manager' || user?.role === 'admin')
   const total = txn.total_amount ?? txn.amount + txn.vat_amount
 
@@ -356,6 +359,9 @@ export function ClaimDetailPage() {
               {txn.submitted_at && <Detail label="Submitted" value={new Date(txn.submitted_at).toLocaleString()} />}
               <Detail label="Current stage" value={currentStageText} strong />
               {txn.op_number && <Detail label="OP number" value={txn.op_number} />}
+              {txn.journal_reference && (
+                <Detail label="Journal" value={`${txn.journal_type ?? ''} ${txn.journal_reference}`.trim()} />
+              )}
               <div className="col-span-2 sm:col-span-3">
                 <dt className="text-xs font-medium uppercase tracking-wide text-brand-textmuted">Remarks</dt>
                 <dd className="mt-0.5 text-brand-text">{txn.remarks?.trim() || '—'}</dd>
@@ -388,7 +394,10 @@ export function ClaimDetailPage() {
               claimId={txn.id}
               stage={stage}
               departmentName={deptPart != null ? deptName : null}
-              duplicateNeedsJustification={stage === 'accountant' && !!txn.duplicate_warning}
+              // Duplicates are reviewed at the Accountant step, or (Professional Signs, no
+              // Accountant) at the step that books the journal.
+              duplicateNeedsJustification={stage === (txn.journal_stage ?? 'accountant') && !!txn.duplicate_warning}
+              journalRequired={!!txn.journal_stage && txn.journal_stage === stage}
               onDecided={() => refetch()}
             />
           )}

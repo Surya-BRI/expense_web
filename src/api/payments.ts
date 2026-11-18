@@ -66,9 +66,20 @@ export function fetchPayments(params: {
   return fetchJson(`/api/payments?${qs.toString()}`)
 }
 
+/** Professional Signs (KSA, PCA document section 7): how the Accounts Department paid. */
+export const PAYMENT_PROCESSES: Record<string, { label: string; hint: string }> = {
+  bank: { label: 'Process 1 · Cash withdrawal from bank', hint: 'Cash withdrawn from the bank and paid out' },
+  accounts_petty_cash: {
+    label: 'Process 2 · Direct payment by Accounts',
+    hint: "Paid from the Accounts Department's own petty cash",
+  },
+}
+
+/** Elsewhere a payment method; at Professional Signs a process (payment_source) instead. */
 export function recordPayment(body: {
   transaction_id: number
-  payment_method: string
+  payment_method?: string | null
+  payment_source?: string | null
   payment_reference: string
   payment_date: string
   remarks: string | null

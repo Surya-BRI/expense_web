@@ -5,11 +5,14 @@ import {
   PiBuildings,
   PiClockCounterClockwise,
   PiHandCoins,
+  PiHourglassMedium,
+  PiMapPinArea,
   PiMoney,
   PiMoneyWavy,
   PiSignOut,
   PiTray,
   PiUserCircle,
+  PiUserSwitch,
   PiUsers,
   PiUsersThree,
   PiWallet,
@@ -73,9 +76,22 @@ export function AppShell() {
                   <PiHandCoins className={ICON} aria-hidden />
                   Top-ups
                 </NavLink>
+                {/* Professional Signs advances and Blue Rhine Contracting petty cash, as in the Flutter drawer. */}
+                <NavLink to="/advances" className={navLinkClass}>
+                  <PiHandCoins className={ICON} aria-hidden />
+                  Advances
+                </NavLink>
+                <NavLink to="/site-pca" className={navLinkClass}>
+                  <PiMapPinArea className={ICON} aria-hidden />
+                  Petty cash
+                </NavLink>
                 <NavLink to="/payments" className={navLinkClass}>
                   <PiMoneyWavy className={ICON} aria-hidden />
                   Payments
+                </NavLink>
+                <NavLink to="/admin/aging" className={navLinkClass}>
+                  <PiHourglassMedium className={ICON} aria-hidden />
+                  Aging report
                 </NavLink>
               </nav>
             ) : (
@@ -94,26 +110,49 @@ export function AppShell() {
                   <PiClockCounterClockwise className={ICON} aria-hidden />
                   History
                 </NavLink>
-                <NavLink to="/topups" className={navLinkClass}>
-                  {user.role === 'hod' ? (
-                    <PiMoney className={ICON} aria-hidden />
-                  ) : (
+                {/* The petty cash menu depends on the signed-in company (Flutter drawer):
+                    Blue Rhine Contracting -> site petty cash, Professional Signs -> advances,
+                    others -> department Funds / Top-ups. */}
+                {user.pca_model === 'site' ? (
+                  <NavLink to="/site-pca" className={navLinkClass}>
+                    <PiMapPinArea className={ICON} aria-hidden />
+                    Petty cash
+                  </NavLink>
+                ) : user.pca_model === 'employee' ? (
+                  <NavLink to="/advances" className={navLinkClass}>
                     <PiHandCoins className={ICON} aria-hidden />
-                  )}
-                  {user.role === 'hod' ? 'Funds' : 'Top-ups'}
-                </NavLink>
+                    Advances
+                  </NavLink>
+                ) : (
+                  user.role !== 'head_accountant' && (
+                    <NavLink to="/topups" className={navLinkClass}>
+                      {user.role === 'hod' ? (
+                        <PiMoney className={ICON} aria-hidden />
+                      ) : (
+                        <PiHandCoins className={ICON} aria-hidden />
+                      )}
+                      {user.role === 'hod' ? 'Funds' : 'Top-ups'}
+                    </NavLink>
+                  )
+                )}
                 {user.role === 'finance_manager' && (
                   <>
-                    <NavLink to="/funds" className={navLinkClass}>
-                      <PiWallet className={ICON} aria-hidden />
-                      Funds
-                    </NavLink>
+                    {user.pca_model !== 'site' && user.pca_model !== 'employee' && (
+                      <NavLink to="/funds" className={navLinkClass}>
+                        <PiWallet className={ICON} aria-hidden />
+                        Funds
+                      </NavLink>
+                    )}
                     <NavLink to="/payments" className={navLinkClass}>
                       <PiMoneyWavy className={ICON} aria-hidden />
                       Payments
                     </NavLink>
                   </>
                 )}
+                <NavLink to="/backup" className={navLinkClass}>
+                  <PiUserSwitch className={ICON} aria-hidden />
+                  My backup
+                </NavLink>
               </nav>
             )}
           </div>

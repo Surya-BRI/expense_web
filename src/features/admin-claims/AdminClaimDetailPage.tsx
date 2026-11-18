@@ -1,7 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { fetchClaim } from '../../api/admin'
 import { ApiError } from '../../api/client'
+import { useAuth } from '../../auth/useAuth'
 import { ErrorBanner } from '../../components/ErrorBanner'
 import { LoadingSpinner } from '../../components/LoadingSpinner'
 import { StatusChip } from '../../components/StatusChip'
@@ -9,18 +11,19 @@ import { formatMoney } from '../../lib/money'
 import { stageLabel } from '../../lib/stageLabels'
 import { ReceiptViewer } from '../claim-detail/ReceiptViewer'
 import { HistoryTimeline } from '../claim-detail/HistoryTimeline'
-import { useMarkPaidMutation } from './useMarkPaidMutation'
+import { RecordPaymentDialog } from '../payments/PaymentsPage'
 
 export function AdminClaimDetailPage() {
   const { id } = useParams<{ id: string }>()
   const claimId = Number(id)
+  const { user } = useAuth()
+  const [paying, setPaying] = useState(false)
+  const [notice, setNotice] = useState<string | null>(null)
 
   const { data: txn, isLoading, error } = useQuery({
     queryKey: ['admin-claim', claimId],
     queryFn: () => fetchClaim(claimId),
   })
-
-  const markPaidMutation = useMarkPaidMutation(claimId)
 
   if (isLoading) return <LoadingSpinner />
   if (error) {
@@ -28,7 +31,15 @@ export function AdminClaimDetailPage() {
   }
   if (!txn) return null
 
-  const canMarkPaid = txn.status === 'approved'
+  // Spec 5.5: paying records method (or KSA process), reference and date -- through the same
+  // form as the Payments page (POST /api/payments), not a one-click "mark paid". Only the
+  // Finance Manager pays here (payment_service checks the company); petty cash outside
+  // Professional Signs has no payment step (payment_status 'not_applicable').
+  const payable =
+    txn.status === 'approved' &&
+    !txn.payment &&
+    (txn.payment_status ? txn.payment_status === 'unpaid' : txn.type !== 'petty_cash')
+  const canRecordPayment = payable && user?.role === 'finance_manager'
   const total = txn.total_amount ?? txn.amount + txn.vat_amount
 
   return (
@@ -84,28 +95,38 @@ export function AdminClaimDetailPage() {
                 <dt className="text-brand-textmuted">Current stage</dt>
                 <dd className="text-brand-text">{stageLabel(txn.current_stage)}</dd>
               </div>
+              {txn.payment && (
+                <div className="flex justify-between">
+                  <dt className="text-brand-textmuted">Payment</dt>
+                  <dd className="text-right text-brand-text">
+                    {txn.payment.payment_method_label ?? txn.payment.payment_method} · ref {txn.payment.payment_reference}
+                    {txn.payment.payment_date ? ` · ${new Date(txn.payment.payment_date).toLocaleDateString()}` : ''}
+                  </dd>
+                </div>
+              )}
             </dl>
           </div>
 
-          {canMarkPaid && (
-            <div className="rounded-md border border-brand-divider bg-brand-card p-4">
-              {markPaidMutation.error && (
-                <ErrorBanner
-                  message={
-                    markPaidMutation.error instanceof ApiError
-                      ? markPaidMutation.error.message
-                      : 'Failed to mark as paid.'
-                  }
-                />
+          {notice && (
+            <div className="rounded-md border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-800">{notice}</div>
+          )}
+
+          {payable && (
+            <div className="rounded-md border border-brand-divider bg-brand-card p-4 text-sm">
+              {canRecordPayment ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNotice(null)
+                    setPaying(true)
+                  }}
+                  className="rounded-md bg-brand-success px-3 py-1.5 text-sm font-medium text-white hover:opacity-90"
+                >
+                  Record payment
+                </button>
+              ) : (
+                <span className="text-brand-textmuted">Approved – waiting for the Finance Manager to record the payment.</span>
               )}
-              <button
-                type="button"
-                disabled={markPaidMutation.isPending}
-                onClick={() => markPaidMutation.mutate()}
-                className="mt-2 rounded-md bg-brand-success px-3 py-1.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-60"
-              >
-                {markPaidMutation.isPending ? 'Marking paid…' : 'Mark as paid'}
-              </button>
             </div>
           )}
 
@@ -117,6 +138,17 @@ export function AdminClaimDetailPage() {
           </section>
         </div>
       </div>
+
+      {paying && (
+        <RecordPaymentDialog
+          claim={txn}
+          onClose={() => setPaying(false)}
+          onSaved={() => {
+            setPaying(false)
+            setNotice(`Claim #${txn.id} marked paid. ${txn.employee_name} has been notified.`)
+          }}
+        />
+      )}
     </div>
   )
 }

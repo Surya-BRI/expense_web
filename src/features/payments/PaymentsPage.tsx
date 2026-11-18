@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import {
   fetchPayments,
   PAYMENT_METHODS,
+  PAYMENT_PROCESSES,
   payableFor,
   recordPayment,
   type PayableClaim,
@@ -210,6 +211,9 @@ export function RecordPaymentDialog({
     return { today: now.toISOString().slice(0, 10), yearAgo: ago.toISOString().slice(0, 10) }
   })
   const [method, setMethod] = useState('bank_transfer')
+  // Professional Signs (KSA): Process 1 / Process 2 instead of a payment method.
+  const byProcess = !!claim.pays_by_process
+  const [process, setProcess] = useState('bank')
   const [reference, setReference] = useState('')
   const [date, setDate] = useState(today)
   const [remarks, setRemarks] = useState('')
@@ -220,13 +224,15 @@ export function RecordPaymentDialog({
     mutationFn: () =>
       recordPayment({
         transaction_id: claim.id,
-        payment_method: method,
+        payment_method: byProcess ? null : method,
+        payment_source: byProcess ? process : null,
         payment_reference: reference.trim(),
         payment_date: date,
         remarks: remarks.trim() ? remarks.trim() : null,
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['payments'] })
+      qc.invalidateQueries({ queryKey: ['admin-claim', claim.id] })
       onSaved()
     },
   })
@@ -252,22 +258,50 @@ export function RecordPaymentDialog({
           <span className="text-sm text-brand-textmuted">Amount to pay</span>
           <span className="text-base font-extrabold text-brand-text">{formatMoney(pay.amount, pay.currency)}</span>
         </div>
-        <label className="block text-sm font-medium text-brand-text">
-          Payment method
-          <select value={method} onChange={(e) => setMethod(e.target.value)} className={`${inputClass} mt-1`}>
-            {Object.entries(PAYMENT_METHODS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
+        {byProcess ? (
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-medium text-brand-text">How was it paid?</legend>
+            {Object.entries(PAYMENT_PROCESSES).map(([value, p]) => (
+              <label key={value} className="flex cursor-pointer items-start gap-2.5 rounded-md border border-brand-divider px-3 py-2">
+                <input
+                  type="radio"
+                  name="process"
+                  value={value}
+                  checked={process === value}
+                  onChange={() => setProcess(value)}
+                  className="mt-1"
+                />
+                <span>
+                  <span className="block text-sm font-semibold text-brand-text">{p.label}</span>
+                  <span className="block text-xs text-brand-textmuted">{p.hint}</span>
+                </span>
+              </label>
             ))}
-          </select>
-        </label>
+          </fieldset>
+        ) : (
+          <label className="block text-sm font-medium text-brand-text">
+            Payment method
+            <select value={method} onChange={(e) => setMethod(e.target.value)} className={`${inputClass} mt-1`}>
+              {Object.entries(PAYMENT_METHODS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <label className="block text-sm font-medium text-brand-text">
           Payment reference *
           <input
             value={reference}
             onChange={(e) => setReference(e.target.value)}
-            placeholder="Transfer no., cheque no., payroll batch…"
+            placeholder={
+              byProcess
+                ? process === 'bank'
+                  ? 'Bank withdrawal no.'
+                  : 'Accounts voucher no.'
+                : 'Transfer no., cheque no., payroll batch…'
+            }
             className={`${inputClass} mt-1`}
           />
         </label>

@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { formatMoney } from '../../lib/money'
 import { ClaimRef } from '../../components/ClaimRef'
+import { isOverdue } from '../../api/sla'
 import type { Transaction } from '../../api/types'
 
 const QUEUE_STATUS: Record<string, { label: string; style: string }> = {
@@ -20,7 +21,12 @@ export function QueueRow({
   onToggleSelect: (id: number) => void
 }) {
   const navigate = useNavigate()
-  const detailPath = `/queue/${stage}/${txn.id}`
+  const covering = txn.covering_for ?? []
+  // A bill covered as someone's backup opens at its real step (e.g. a Finance Manager covering an
+  // HOD acts on the HOD step), so the approve / dispute / reject buttons show.
+  const detailStage = covering.length > 0 && txn.current_stage ? txn.current_stage : stage
+  const detailPath = `/queue/${detailStage}/${txn.id}`
+  const overdue = txn.status === 'submitted' && isOverdue(txn.stage_due_at)
 
   return (
     <tr
@@ -38,7 +44,12 @@ export function QueueRow({
       <td className="px-3 py-3">
         <ClaimRef id={txn.id} billNumber={txn.bill_number} link />
       </td>
-      <td className="px-3 py-3 text-sm text-brand-text">{txn.employee_name}</td>
+      <td className="px-3 py-3 text-sm text-brand-text">
+        {txn.employee_name}
+        {covering.length > 0 && (
+          <div className="mt-0.5 text-xs font-bold text-brand-orange">Covering for {covering.join(', ')}</div>
+        )}
+      </td>
       <td className="px-3 py-3">
         {txn.region_code && (
           <span className="rounded-full bg-brand-background px-2 py-0.5 text-xs font-medium text-brand-textmuted">
@@ -64,6 +75,10 @@ export function QueueRow({
       </td>
       <td className="px-3 py-3">
         <div className="flex flex-wrap gap-1">
+          {/* Past this step's SLA time. */}
+          {overdue && (
+            <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-bold text-brand-danger">Overdue</span>
+          )}
           {txn.duplicate_flag && (
             <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-brand-orange">
               Duplicate

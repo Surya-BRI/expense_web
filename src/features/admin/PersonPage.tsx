@@ -7,6 +7,10 @@ import { LoadingSpinner } from '../../components/LoadingSpinner'
 import { companyTitle, errorMessage, initials, roleLabel } from './adminHelpers'
 import { Avatar, PrimaryButton } from './AdminUi'
 import { adminKeys, useAdminRegions, useAdminUser } from './useAdminQueries'
+import { adminRemoveBackup, adminSetBackup, fetchAdminBackup } from '../../api/backup'
+import { BackupPanel } from '../backup/BackupPanel'
+
+const APPROVER_ROLES = new Set(['hod', 'accountant', 'head_accountant', 'finance_manager'])
 
 /** Port of AdminPersonScreen (admin_people_screen.dart): details + "companies this person covers". */
 export function PersonPage() {
@@ -107,9 +111,21 @@ function PersonDetails({ user, regions, onSaved }: { user: OrgUser; regions: Reg
   rows.push(['Home company', homeTitle || '—'])
   rows.push(['App access', user.has_app_login ? 'Signed in' : 'Not signed in yet'])
 
+  const isApprover = APPROVER_ROLES.has(user.role ?? '')
+
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <div className="space-y-4">
+        {/* Backup approver while this person is away (approvers only). */}
+        {user.has_app_login && isApprover && (
+          <BackupPanel
+            queryKey={['admin-backup', user.id]}
+            whose={`${user.display_name}'s`}
+            load={() => fetchAdminBackup(user.id)}
+            save={(backupId, start, end) => adminSetBackup(user.id, backupId, start, end)}
+            remove={adminRemoveBackup}
+          />
+        )}
         <div className="flex items-start gap-4 rounded-2xl border border-brand-divider bg-brand-card p-4">
           <Avatar text={initials(user.display_name)} size="lg" />
           <div>

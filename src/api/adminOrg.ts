@@ -19,6 +19,8 @@ export interface RegionConfig {
   allocation_model?: string | null
   brand_color?: string | null
   petty_cash_hard_limit_enabled?: boolean
+  /** department (BRI, Oman) | employee (Professional Signs advances) | site (Blue Rhine Contracting). */
+  pca_model?: string | null
   is_active?: boolean
 }
 
@@ -31,7 +33,7 @@ export interface RegionApprover {
   home_region: boolean
 }
 
-export type ApproverRole = 'hod' | 'accountant' | 'finance_manager'
+export type ApproverRole = 'hod' | 'accountant' | 'head_accountant' | 'finance_manager'
 
 export interface RegionApprovers {
   region_id: number

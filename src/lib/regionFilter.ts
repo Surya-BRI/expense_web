@@ -1,9 +1,9 @@
 import type { AuthUser } from '../api/types'
+import { erpCompanyLabel } from './companyNames'
 
-const COMPANY_LABELS: Record<string, string> = { DUBAI: 'Dubai', UAE: 'UAE', KSA: 'KSA', OMAN: 'Oman' }
-
+/** ERP's company code and name, e.g. "BRC · Blue Rhine Contracting" (see companyNames.ts). */
 export function companyLabel(code: string): string {
-  return COMPANY_LABELS[code.toUpperCase()] ?? code
+  return erpCompanyLabel(code)
 }
 
 /**

@@ -9,14 +9,28 @@ export function fetchTransaction(id: number): Promise<Transaction> {
   return fetchJson(`/api/approvals/${id}`)
 }
 
-function decide(id: number, action: 'approve' | 'dispute' | 'reject', comment?: string): Promise<Transaction> {
+/** Expense journal booked at the company's journal step (Professional Signs' Accounts Manager). */
+export interface Journal {
+  /** EJV, or EJVB for a multi-branch transaction. */
+  journal_type: string
+  /** The journal's number in ERP. */
+  journal_reference: string
+}
+
+function decide(
+  id: number,
+  action: 'approve' | 'dispute' | 'reject',
+  comment?: string,
+  journal?: Journal | null,
+): Promise<Transaction> {
   return fetchJson(`/api/approvals/${id}/${action}`, {
     method: 'POST',
-    body: JSON.stringify({ comment: comment ?? null }),
+    body: JSON.stringify({ comment: comment ?? null, ...(journal ?? {}) }),
   })
 }
 
-export const approve = (id: number, comment?: string) => decide(id, 'approve', comment)
+export const approve = (id: number, comment?: string, journal?: Journal | null) =>
+  decide(id, 'approve', comment, journal)
 // Backend requires a non-empty comment for dispute/reject (else 400) — enforce in the UI too.
 export const dispute = (id: number, comment: string) => decide(id, 'dispute', comment)
 export const reject = (id: number, comment: string) => decide(id, 'reject', comment)

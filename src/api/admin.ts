@@ -9,6 +9,5 @@ export function fetchClaim(id: number): Promise<Transaction> {
   return fetchJson(`/api/admin/claims/${id}`)
 }
 
-export function markPaid(id: number): Promise<Transaction> {
-  return fetchJson(`/api/admin/claims/${id}/mark-paid`, { method: 'POST' })
-}
+// Paying a claim goes through POST /api/payments (api/payments.ts recordPayment), with the
+// method / reference / date Spec 5.5 asks for -- not the old one-click /mark-paid route.
