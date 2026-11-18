@@ -5,7 +5,10 @@ import { demoGroups, demoUsers, type DemoUser } from './demoUsers'
 function roleOf(u: DemoUser): { text: string; style: string } {
   const l = u.label.toLowerCase()
   if (l.includes('admin')) return { text: 'Admin', style: 'bg-purple-100 text-purple-700' }
-  if (l.includes('finance')) return { text: 'Finance', style: 'bg-brand-successsoft text-brand-success' }
+  if (l.includes('finance') || l.includes('accounts manager')) {
+    return { text: 'Finance', style: 'bg-brand-successsoft text-brand-success' }
+  }
+  if (l.includes('head of accountant')) return { text: 'Head Acc.', style: 'bg-brand-lightblue text-brand-darkblue' }
   if (l.includes('accountant')) return { text: 'Accounts', style: 'bg-brand-lightblue text-brand-darkblue' }
   return { text: 'HOD', style: 'bg-orange-100 text-brand-orange' }
 }
@@ -14,7 +17,7 @@ function roleOf(u: DemoUser): { text: string; style: string } {
 function nameOf(u: DemoUser): string {
   return u.label
     .split(' · ')
-    .filter((p) => !/^(hod|accountant|finance manager|admin)$/i.test(p.trim()))
+    .filter((p) => !/^(hod|accountant|head of accountant|finance manager|accounts manager|admin)$/i.test(p.trim()))
     .join(' · ')
 }
 
